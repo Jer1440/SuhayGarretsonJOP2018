@@ -1,0 +1,370 @@
+#---------------------------------------------------------------------------------
+#---Replication Script and Codebook for-------------------------------------------
+#---------------------------------------------------------------------------------
+#---Suhay, Elizabeth and Jeremiah Garretson.-"Science, Sexuality,
+#--------and Civil Rights: Does Information on the Caused of 
+#--------Sexual Orientation Change Attitude?"-------------------------------------
+#--------The Journal of Politics--------------------------------------------------
+#---------------------------------------------------------------------------------
+#-This script should reproduce the statistical analyses using the 
+#-dataset "TESSSuhayGarretsonJOPData.txt".  1) Place the data file in
+#-your working directory for R. 2) Make sure the packages 'arm', 
+#-'foreign', "MASS", "mediation", etc are installed in R.  3) Put the location of your
+#-working directory, in R format, into the command, 'setwd('c: ')
+#-below.  4) Copy and Paste this file into the R command line and hit
+#-the return key. All analyses should then be outputted.  
+#---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+
+#----------Code Book for TESSSuhayGarretsonJOPData.txt----------------------------
+#---------------------------------------------------------------------------------
+#
+#manip ~ dummy variable, =1 if passed manipulation check, 0 otherwise
+#postatt1 ~ post test attributions on the Choice/Environment-->Genes Question
+#-----------high values indicated greater genetic determination, coded 0-1, 5pt
+#preatt1 ~ pre test attributions on the Choice/Environment-->Genes Question
+#-----------high values indicated greater genetic determination, coded 0-1, 5pt
+#biology ~ dummy variable, =1 if in the 'biology' condition, 0 otherwise
+#notbiology ~ dummy variable, =1 if in the 'not biology' condition, 0 otherwise
+#lib3ptC ~ Ideological Self Placement, -.5='Cons.,0='Mod.',.5='Lib.',
+#-----------'leaners' coded as moderates.
+#ageB ~ Age, in year, recoded to range from approximately 0 to 1.  Higher values
+#-----------indicate greater age
+#male ~ dummy variable, =1 if respondent id'd as 'Male', 0 otherwise
+#hisp ~ dummy variable, =1 if respondent id'd as 'Hispanic or Latino(a)', 0 otherwise
+#black ~ dummy variable, =1 if respondent id'd as 'Black or African-American', 0 otherwise
+#educ ~ reported education, 5 pt scale, recoded to range from 0 to 1, higher value indicate
+#------------more years of formal education.
+#religosity ~ reported church attendance, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate less attendence
+#biolib3ptC ~ biology * lib3ptC
+#notbiolib3ptC ~ notbiology * lib3ptC
+#pgenetint ~ reported interest in genetics, 4 pt, recoded to range from 0 to 1,
+#------------higher values indicate less interest
+#pgaymar ~ pre test gay marriage support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay marriage
+#postgaymar ~ post test gay marriage support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay marriage
+#pgaycu ~ pre test gay civil union support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay civil unions
+#postgaycu ~ post test civil union support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay civil unions
+#pgayadopt ~ pre test gay adoption support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay adoption
+#postgayadopt ~ post test adoption support, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more support of gay adoption
+#preright3 ~ ((pgaymar+pgaycu+pgayadopt)/3), pre test gay rights scale, 0-1, higher values indicate greater support
+#postright3 ~ ((postgaymar+postgaycu+postgayadopt)/3), post test gay rights scale, 0-1, higher values indicate greater support
+#pgayimmoral ~ pre test attitudes on morality of homosexuality, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more believe that homosexuality is moral
+#postgayimmoral ~ post test attitudes on morality of homosexuality, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more believe that homosexuality is moral
+#pgayaccept ~ pre test attitudes on the acceptance of homosexuality, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more acceptance of homosexuality
+#postgayaccept ~ post test attitudes on the acceptance of homosexuality, 6pt scale, recoded to range form 0 to 1,
+#------------higher values indicate more acceptance of homosexuality
+#pgaychild ~ pre test reaction to having a gay child, 4pt scale, recoded to range form 0 to 1,
+#------------higher values indicate less negative reaction
+#postgaychild ~ post test reaction to having a gay child, 4pt scale, recoded to range form 0 to 1,
+#------------higher values indicate less negative reaction
+#premoral ~ ((pgayaccept+pgayimmoral)/2), pre test gay morality scale, 0-1, higher values indicated greater moral support for homosexuality
+#postmoral ~ ((postgayaccept+postgayimmoral)/2), post test gay morality scale, 0-1, higher values indicated greater moral support for homosexuality
+#pgaytherm ~ pre test feeling thermometer of 'lesbians and gays'/100, range 0-1, greater values = 'warmer'
+#postgaytherm ~ pre test feeling thermometer of 'lesbians and gays'/100, range 0-1, greater values = 'warmer'
+#pstrtherm ~ pre test feeling thermometer of 'heterosexuals'/100, range 0-1, greater values = 'warmer'
+#poststrtherm ~ pre test feeling thermometer of 'heterosexuals'/100, range 0-1, greater values = 'warmer'
+#prehomhetdif ~ (pgaytherm-pstrtherm)/100, difference in pgaytherm - pstrtherm divided by 100
+#posthomhetdif ~ (postgaytherm-poststrtherm)/100, difference in postgaytherm - poststrtherm divided by 
+#knowgay ~ dummy variable, 1=reported interpersonal contact with lesbians or gay, 0=No reported contact
+#prot ~ dummy variable, 1=self ID as Protestant, 0=otherwise
+#cath ~ dummy variable, 1=self ID as Catholic, 0=otherwise
+#bornagain ~ dummy variable, 1=self ID as Born-Again, 0=otherwise
+#
+#---------------------------------------------------------------------------------
+#
+#----------Replication Script for Suhay and Garretson JOP-------------------------
+#
+setwd("****your workign directory here****")
+
+library(car)
+library(foreign)
+library(MASS)
+library(mediation)
+SGJOP<-read.table("TESSSuhayGarretsonJOPData.txt",sep='\t')
+attach(SGJOP)
+#
+#-----Table 1, Main Manuscript----------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab1Mod1<-lm(postatt1~biology+notbiology+preatt1,subset=(manip==1))
+	summary(Tab1Mod1)
+#
+#----------------Model 2----------------------------------------------------------
+Tab1Mod2<-lm(postatt1~biology+notbiology+preatt1+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1))
+	summary(Tab1Mod2)
+#
+#----------------Model 3----------------------------------------------------------
+Tab1Mod3<-lm(postatt1~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1))
+	summary(Tab1Mod3)
+#
+#----------------Model 4----------------------------------------------------------
+Tab1Mod4<-lm(postatt1~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=((manip==1)&(pgenetint>.6)&(pgenetint>-1)))
+	summary(Tab1Mod4)
+#
+#----------------Model 5----------------------------------------------------------
+Tab1Mod5<-lm(postatt1~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=((manip==1)&(pgenetint<.6)&(pgenetint>-1)))
+	summary(Tab1Mod5)
+#---------------------------------------------------------------------------------
+#
+#-----Table 2, Main Manuscript----------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab2Mod1<-lm(postright3~biology+notbiology+preright3,subset=(manip==1))
+	summary(Tab2Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab2Mod2<-lm(postmoral~biology+notbiology+premoral,subset=(manip==1))
+	summary(Tab2Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab2Mod3<-lm(posthomhetdif~biology+notbiology+prehomhetdif,subset=(manip==1))
+	summary(Tab2Mod3)
+#---------------------------------------------------------------------------------
+#
+#
+#-----------------Appendix Analyses-----------------------------------------------
+#
+#
+#----------Mediation Analysis---------------------------------------------------
+#-------------------------------------------------------------------------------
+#------Note: Due to Stochastic Variation in the way this method is calculated---
+#-------------the results will be slightly different in each run.---------------
+#-------------------------------------------------------------------------------
+#-----Table 1, Appendix---------------------------------------------------------
+#-------------------------------------------------------------------------------
+rightschange<-postright3-preright3
+attdif<-postatt1-preatt1
+Tab1ModIV<-lm(rightschange~attdif+notbiology+biology,subset=(manip==1))
+Tab1Mediator<-lm(attdif~notbiology+biology,subset=((rightschange!='NA')&(manip==1)))
+result1<-mediate(Tab1Mediator,Tab1ModIV,treat='biology',mediator='attdif',robustSE=T,sims=10000)
+summary(result1)
+#-----Table 2, Appendix---------------------------------------------------------
+#-------------------------------------------------------------------------------
+Tab2ModIV<-lm(rightschange~attdif+notbiology+biology,subset=(manip==1))
+Tab2Mediator<-lm(attdif~notbiology+biology,subset=((rightschange!='NA')&(manip==1)))
+result2<-mediate(Tab2Mediator,Tab2ModIV,treat='notbiology',mediator='attdif',robustSE=T,sims=10000)
+summary(result2)
+
+#-----Table 3---------------------------------------------------------------------
+Tab3Mod1<-polr(as.factor(postatt1)~biology+notbiology+preatt1,subset=(manip==1),method='probit')
+	summary(Tab3Mod1)
+#
+#----------------Model 2----------------------------------------------------------
+Tab3Mod2<-polr(as.factor(postatt1)~biology+notbiology+preatt1+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1),method='probit')
+	summary(Tab3Mod2)
+#
+#----------------Model 3----------------------------------------------------------
+Tab3Mod3<-polr(as.factor(postatt1)~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1),method='probit')
+	summary(Tab3Mod3)
+#
+#----------------Model 4----------------------------------------------------------
+Tab3Mod4<-polr(as.factor(postatt1)~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=((manip==1)&(pgenetint>.6)&(pgenetint>-1)),method='probit')
+	summary(Tab3Mod4)
+#
+#----------------Model 5----------------------------------------------------------
+Tab3Mod5<-polr(as.factor(postatt1)~biology+notbiology+preatt1+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=((manip==1)&(pgenetint<.6)&(pgenetint>-1)),method='probit')
+	summary(Tab3Mod5)
+#---------------------------------------------------------------------------------
+#
+#
+#-----Table 4---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab4Mod1<-lm(postright3~biology+notbiology+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity+preright3,subset=(manip==1))
+	summary(Tab4Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab4Mod2<-lm(postmoral~biology+notbiology+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity++premoral,subset=(manip==1))
+	summary(Tab4Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab4Mod3<-lm(posthomhetdif~biology+notbiology+biolib3ptC+notbiolib3ptC+lib3ptC+ageB+male+hisp+black+educ+religosity++prehomhetdif,subset=(manip==1))
+	summary(Tab4Mod3)
+#---------------------------------------------------------------------------------
+#
+#-----Table 5---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab5Mod1<-lm(postright3~biology+notbiology+lib3ptC+ageB+male+hisp+black+educ+religosity+prot+cath+bornagain+knowgay+preright3,subset=(manip==1))
+	summary(Tab5Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab5Mod2<-lm(postmoral~biology+notbiology+lib3ptC+ageB+male+hisp+black+educ+religosity+prot+cath+bornagain+knowgay+premoral,subset=(manip==1))
+	summary(Tab5Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab5Mod3<-lm(posthomhetdif~biology+notbiology+lib3ptC+ageB+male+hisp+black+educ+religosity+prot+cath+bornagain+knowgay+prehomhetdif,subset=(manip==1))
+	summary(Tab5Mod3)
+#---------------------------------------------------------------------------------
+#
+#-----Table 6---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab6Mod1<-lm(postgaymar~biology+notbiology+pgaymar,subset=(manip==1))
+	summary(Tab6Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab6Mod2<-lm(postgaycu~biology+notbiology+pgaycu,subset=(manip==1))
+	summary(Tab6Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab6Mod3<-lm(postgayadopt~biology+notbiology+pgayadopt,subset=(manip==1))
+	summary(Tab6Mod3)
+#---------------------------------------------------------------------------------
+#
+#
+#-----Table 7---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab7Mod1<-lm(postgayimmoral~biology+notbiology+pgayimmoral,subset=(manip==1))
+	summary(Tab7Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab7Mod2<-lm(postgayaccept~biology+notbiology+pgayaccept,subset=(manip==1))
+	summary(Tab7Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab7Mod3<-lm(postgaychild~biology+notbiology+pgaychild,subset=(manip==1))
+	summary(Tab7Mod3)
+#---------------------------------------------------------------------------------
+#
+#
+#-----Table 8---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab8Mod1<-lm(postgaytherm~biology+notbiology+pgaytherm,subset=(manip==1))
+	summary(Tab8Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab8Mod2<-lm(poststrtherm~biology+notbiology+pstrtherm,subset=(manip==1))
+	summary(Tab8Mod2)
+#---------------------------------------------------------------------------------
+#
+#
+#-----Table 9 Calculations--------------------------------------------------------
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==0)])
+x2
+length(postatt1[(biology==0)&(notbiology==0)])
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==1)&(notbiology==0)])
+x2
+length(postatt1[(biology==1)&(notbiology==0)])
+sd(postatt1[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(postatt1!=NA)])
+x2
+length(postatt1[(biology==0)&(notbiology==1)])
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+
+#-----Table 10, Conservatives-----------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==-.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==-.5)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==-.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==-.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==-.5)])
+x2
+sd(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==-.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==-.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==-.5)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==-.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+#-----Table 10, Moderates-----------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==0)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==0)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==0)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==0)])
+x2
+sd(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==0)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==0)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+#-----Table 10, Liberals-----------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==.5)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==0)&(lib3ptC==.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==.5)])
+x2
+sd(postatt1[(manip==1)&(biology==1)&(notbiology==0)&(lib3ptC==.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==.5)],na.rm=T)
+x2<-length(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==.5)])
+x2
+sd(postatt1[(manip==1)&(biology==0)&(notbiology==1)&(lib3ptC==.5)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+
+#-----Table 11, Gay Rights-----------------------------------------------------
+mean(postright3[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)
+x2<-length(postright3[(manip==1)&(biology==0)&(notbiology==0)])
+x2
+sd(postright3[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postright3[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)
+x2<-length(postright3[(manip==1)&(biology==1)&(notbiology==0)])
+x2
+sd(postright3[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postright3[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)
+x2<-length(postright3[(manip==1)&(biology==0)&(notbiology==1)])
+x2
+sd(postright3[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+#-----Table 11, Gay Morality-----------------------------------------------------
+mean(postmoral[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)
+x2<-length(postmoral[(manip==1)&(biology==0)&(notbiology==0)])
+x2
+sd(postmoral[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postmoral[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)
+x2<-length(postmoral[(manip==1)&(biology==1)&(notbiology==0)])
+x2
+sd(postmoral[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(postmoral[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)
+x2<-length(postmoral[(manip==1)&(biology==0)&(notbiology==1)])
+x2
+sd(postmoral[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+#-----Table 11, Thermometers------------------------------------------------------
+mean(posthomhetdif[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)
+x2<-length(posthomhetdif[(manip==1)&(biology==0)&(notbiology==0)])
+x2
+sd(posthomhetdif[(manip==1)&(biology==0)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(posthomhetdif[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)
+x2<-length(posthomhetdif[(manip==1)&(biology==1)&(notbiology==0)])
+x2
+sd(posthomhetdif[(manip==1)&(biology==1)&(notbiology==0)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+mean(posthomhetdif[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)
+x2<-length(posthomhetdif[(manip==1)&(biology==0)&(notbiology==1)])
+x2
+sd(posthomhetdif[(manip==1)&(biology==0)&(notbiology==1)],na.rm=T)/sqrt(x2)
+#---------------------------------------------------------------------------------
+
+#-----Table 12--------------------------------------------------------------------
+table(preatt1[(manip==1)&(biology==0)&(notbiology==0)],postatt1[(manip==1)&(biology==0)&(notbiology==0)])
+table(preatt1[(manip==1)&(biology==1)],postatt1[(manip==1)&(biology==1)])
+table(preatt1[(manip==1)&(notbiology==1)],postatt1[(manip==1)&(notbiology==1)])
+
+#-----Table 13---------------------------------------------------------------------
+#----------------Model 1----------------------------------------------------------
+Tab13Mod1<-lm(preright3~preatt1+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1))
+	summary(Tab13Mod1)
+#----------------Model 2----------------------------------------------------------
+Tab13Mod2<-lm(premoral~preatt1+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1))
+	summary(Tab13Mod2)
+#----------------Model 3----------------------------------------------------------
+Tab13Mod3<-lm(prehomhetdif~preatt1+lib3ptC+ageB+male+hisp+black+educ+religosity,subset=(manip==1))
+	summary(Tab13Mod3)
+#---------------------------------------------------------------------------------
